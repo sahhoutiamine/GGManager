@@ -1,4 +1,4 @@
-FROM php:8.3-apache
+FROM php:8.4-apache
 
 # Set UID to match host user to avoid workspace permissions issues
 ARG uid=1000
