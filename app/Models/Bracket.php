@@ -17,6 +17,6 @@ class Bracket extends Model
 
     public function matches(): HasMany
     {
-        return $this->hasMany(Match::class);
+        return $this->hasMany(GameMatch::class);
     }
 }
