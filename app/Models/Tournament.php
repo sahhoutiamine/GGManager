@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Tournament extends Model
 {
-    protected $fillable = ['organizer_id', 'name', 'game', 'start_date', 'max_participants', 'format', 'status'];
+    use HasFactory;
+
+    protected $fillable = [
+        'organizer_id',
+        'name',
+        'game',
+        'start_date',
+        'max_participants',
+        'format',
+        'status',
+    ];
+
+    protected $casts = [
+        'start_date' => 'datetime',
+    ];
 
     public function organizer(): BelongsTo
     {
@@ -21,8 +36,23 @@ class Tournament extends Model
         return $this->hasMany(Registration::class);
     }
 
+    public function participants()
+    {
+        return $this->belongsToMany(User::class, 'registrations');
+    }
+
     public function bracket(): HasOne
     {
         return $this->hasOne(Bracket::class);
+    }
+
+    public function matches(): HasMany
+    {
+        return $this->hasMany(TournamentMatch::class);
+    }
+
+    public function hasStartedMatches(): bool
+    {
+        return $this->matches()->where('status', '!=', 'scheduled')->exists();
     }
 }
