@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # The PHP Apache combined application container
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        uid: 1000
+    image: laravel-app
+    container_name: laravel_app
+    restart: unless-stopped
+    ports:
+      - "8000:80"    # Expose web service on port 8000 externally
+    working_dir: /var/www
+    volumes:
+      # Map raw code to /var/www so live edits take effect directly
+      - ./:/var/www
+    # Requires DB layer before fully bootable
+    depends_on:
+      - db
+    networks:
+      - laravel
+
+  # Database container
+  db:
+    image: mysql:8.0
+    container_name: laravel_db
+    restart: unless-stopped
+    environment:
+      # Inject credentials either from .env bindings or fallback to default
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    volumes:
+      # Persistent volume for MySQL database
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  # Internal robust named volume for storing MySQL state
+  dbdata:
