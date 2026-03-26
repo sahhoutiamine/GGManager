@@ -3,33 +3,53 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateScoreRequest;
+use App\Http\Resources\MatchResource;
 use App\Models\TournamentMatch;
 use App\Events\ScoreUpdated;
-use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class MatchController extends Controller
 {
-    public function updateScore(Request $request, TournamentMatch $match)
+    use AuthorizesRequests;
+
+    /**
+     * PATCH /api/matches/{match}/score
+     *
+     * Update the score of a match and propagate the winner to the next round.
+     * Only the organizer who owns the tournament may perform this action.
+     */
+    public function updateScore(UpdateScoreRequest $request, TournamentMatch $match): MatchResource
     {
-        // Validation : score requis et winner_id doit être soit le player1 soit le player2
-        $validated = $request->validate([
-            'score' => 'required|string',
-            'winner_id' => 'required|exists:users,id|in:' . $match->player1_id . ',' . $match->player2_id,
-        ]);
+        $this->authorize('updateScore', $match);
 
-        // Mise à jour du match
+        $validated = $request->validated();
+
+        // Persist result on current match
         $match->update([
-            'score' => $validated['score'],
+            'score'     => $validated['score'],
             'winner_id' => $validated['winner_id'],
-            'status' => 'finished',
+            'status'    => 'finished',
         ]);
 
-        // Déclenchement du broadcast pour les spectateurs
-        broadcast(new ScoreUpdated($match))->toOthers();
+        // ── Winner propagation ───────────────────────────────────────────────
+        // Move the winner into the next match as player1 or player2 depending
+        // on which slot is still empty.
+        if ($match->next_match_id) {
+            $nextMatch = TournamentMatch::find($match->next_match_id);
 
-        return response()->json([
-            'message' => 'Score updated and broadcasted successfully',
-            'match' => $match
-        ]);
+            if ($nextMatch) {
+                if (is_null($nextMatch->player1_id)) {
+                    $nextMatch->update(['player1_id' => $validated['winner_id']]);
+                } elseif (is_null($nextMatch->player2_id)) {
+                    $nextMatch->update(['player2_id' => $validated['winner_id']]);
+                }
+            }
+        }
+
+        // ── Real-time broadcast ──────────────────────────────────────────────
+        broadcast(new ScoreUpdated($match->fresh(['player1', 'player2', 'winner'])))->toOthers();
+
+        return new MatchResource($match->fresh(['player1', 'player2', 'winner']));
     }
 }
