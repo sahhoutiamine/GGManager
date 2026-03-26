@@ -9,12 +9,18 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0c306791ddbabb85a01706b6909a8b9d9fc82a41
 
 
 #[Fillable(['name', 'email', 'password', 'role'])]
 #[Hidden(['password', 'remember_token'])]
+<<<<<<< HEAD
 =======
 >>>>>>> bd07f113d78c7a4ab10fa5dbd01e704e1954d758
+=======
+>>>>>>> 0c306791ddbabb85a01706b6909a8b9d9fc82a41
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
