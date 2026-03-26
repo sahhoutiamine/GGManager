@@ -38,7 +38,8 @@ class Tournament extends Model
 
     public function participants()
     {
-        return $this->belongsToMany(User::class, 'registrations');
+        return $this->belongsToMany(User::class, 'registrations')
+                    ->withPivot('status', 'registered_at');
     }
 
     public function bracket(): HasOne
