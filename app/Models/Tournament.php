@@ -56,4 +56,19 @@ class Tournament extends Model
     {
         return $this->matches()->where('status', '!=', 'scheduled')->exists();
     }
+    public function scopeGame($query, $game)
+    {
+        if ($game) {
+            return $query->where('game', $game);
+        }
+        return $query;
+    }
+
+    public function scopeStatus($query, $status)
+    {
+        if ($status) {
+            return $query->where('status', $status);
+        }
+        return $query;
+    }
 }

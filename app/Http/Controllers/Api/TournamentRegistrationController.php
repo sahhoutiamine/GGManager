@@ -55,12 +55,12 @@ class TournamentRegistrationController extends Controller
     public function participants(Request $request, Tournament $tournament): JsonResponse
     {
         // Only "organizer" who owns the tournament can access
-        $this->authorize('viewParticipants', $tournament);
+        $this->authorize('manageParticipants', $tournament);
 
         $participants = $tournament->participants;
 
         return response()->json([
-            'data' => $participants
+            'data' => \App\Http\Resources\ParticipantResource::collection($participants)
         ]);
     }
 }
