@@ -51,4 +51,12 @@ class TournamentPolicy
         return $user->id === $tournament->organizer_id 
                && !$tournament->hasStartedMatches();
     }
+
+    /**
+     * Determine whether the user can manage participants.
+     */
+    public function manageParticipants(User $user, Tournament $tournament): bool
+    {
+        return $user->role === 'organizer' && $user->id === $tournament->organizer_id;
+    }
 }

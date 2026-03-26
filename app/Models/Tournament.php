@@ -38,7 +38,8 @@ class Tournament extends Model
 
     public function participants()
     {
-        return $this->belongsToMany(User::class, 'registrations');
+        return $this->belongsToMany(User::class, 'registrations')
+                    ->withPivot('status', 'registered_at');
     }
 
     public function bracket(): HasOne
@@ -54,5 +55,20 @@ class Tournament extends Model
     public function hasStartedMatches(): bool
     {
         return $this->matches()->where('status', '!=', 'scheduled')->exists();
+    }
+    public function scopeGame($query, $game)
+    {
+        if ($game) {
+            return $query->where('game', $game);
+        }
+        return $query;
+    }
+
+    public function scopeStatus($query, $status)
+    {
+        if ($status) {
+            return $query->where('status', $status);
+        }
+        return $query;
     }
 }

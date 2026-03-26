@@ -19,6 +19,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\Tournament::class, 
+            \App\Policies\TournamentPolicy::class
+        );
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\TournamentMatch::class, 
+            \App\Policies\MatchPolicy::class
+        );
     }
 }
