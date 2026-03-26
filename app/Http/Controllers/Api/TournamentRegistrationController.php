@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ParticipantResource;
 use App\Models\Tournament;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class TournamentRegistrationController extends Controller
@@ -50,17 +52,17 @@ class TournamentRegistrationController extends Controller
     }
 
     /**
-     * Organizer - Liste des inscrits
+     * Organizer — list of registered participants.
+     *
+     * GET /api/tournaments/{tournament}/participants
+     * Requires: auth, manageParticipants policy (organizer owner)
      */
-    public function participants(Request $request, Tournament $tournament): JsonResponse
+    public function participants(Request $request, Tournament $tournament): AnonymousResourceCollection
     {
-        // Only "organizer" who owns the tournament can access
         $this->authorize('manageParticipants', $tournament);
 
         $participants = $tournament->participants;
 
-        return response()->json([
-            'data' => \App\Http\Resources\ParticipantResource::collection($participants)
-        ]);
+        return ParticipantResource::collection($participants);
     }
 }
