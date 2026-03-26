@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = ['name', 'email', 'password', 'role'];
