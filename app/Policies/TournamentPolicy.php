@@ -53,9 +53,9 @@ class TournamentPolicy
     }
 
     /**
-     * Determine whether the user can view the participants list.
+     * Determine whether the user can manage participants.
      */
-    public function viewParticipants(User $user, Tournament $tournament): bool
+    public function manageParticipants(User $user, Tournament $tournament): bool
     {
         return $user->role === 'organizer' && $user->id === $tournament->organizer_id;
     }
