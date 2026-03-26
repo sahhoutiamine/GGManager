@@ -77,14 +77,32 @@ class TournamentController extends Controller
 
         return response()->noContent();
     }
-    public function closeRegistration(Tournament $tournament){
-        $tournament->update([
-            'status'=>'closed'
-        ]);
+    /**
+     * Close registration and trigger async bracket generation.
+     * Only the tournament's organizer may do this.
+     */
+    public function closeRegistration(Tournament $tournament): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('update', $tournament);
+
+        if ($tournament->status !== 'open') {
+            return response()->json([
+                'message' => 'Tournament registration is already closed.',
+            ], 422);
+        }
+
+        if ($tournament->bracket()->exists()) {
+            return response()->json([
+                'message' => 'Bracket has already been generated for this tournament.',
+            ], 422);
+        }
+
+        $tournament->update(['status' => 'closed']);
+
         GenerateBracketJob::dispatch($tournament);
 
-        return $response->json([
-        'message'=>'Bracket generation started'
-        ]);
+        return response()->json([
+            'message' => 'Registration closed. Bracket generation has been queued.',
+        ], 202);
     }
 }
