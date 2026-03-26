@@ -22,17 +22,11 @@ class TournamentController extends Controller
     {
         $query = Tournament::with('organizer')->withCount('registrations');
 
-        // Filter by game
-        if ($request->has('game')) {
-            $query->where('game', $request->game);
-        }
+        $query->game($request->query('game'))
+              ->status($request->query('status'))
+              ->latest();
 
-        // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        return TournamentResource::collection($query->get());
+        return TournamentResource::collection($query->paginate(10));
     }
 
     /**
