@@ -59,4 +59,14 @@ class TournamentPolicy
     {
         return $user->role === 'organizer' && $user->id === $tournament->organizer_id;
     }
+
+    /**
+     * Determine whether the user can close registration for the tournament.
+     */
+    public function closeRegistration(User $user, Tournament $tournament): bool
+    {
+        return $user->role === 'organizer' 
+               && $user->id === $tournament->organizer_id 
+               && $tournament->status === 'open';
+    }
 }
