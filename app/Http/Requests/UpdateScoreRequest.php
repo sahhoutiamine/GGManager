@@ -26,7 +26,17 @@ class UpdateScoreRequest extends FormRequest
         $match = $this->route('match');
 
         return [
-            'score'     => ['required', 'string', 'max:50'],
+            'score'     => [
+                'required',
+                'string',
+                'regex:/^[0-9]+-[0-9]+$/',
+                function ($attribute, $value, $fail) {
+                    [$score1, $score2] = explode('-', $value);
+                    if ($score1 === $score2) {
+                        $fail('The score cannot be a tie; there must be a clear winner.');
+                    }
+                },
+            ],
             'winner_id' => [
                 'required',
                 'integer',
