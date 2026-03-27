@@ -26,22 +26,25 @@ Route::middleware('auth:sanctum')->group(function () {
     // Current user
     Route::get('/user', fn (Request $request) => $request->user());
 
-    // Tournament management (organizer)
-    Route::post('tournaments',                              [TournamentController::class, 'store']);
-    Route::put('tournaments/{tournament}',                  [TournamentController::class, 'update']);
-    Route::delete('tournaments/{tournament}',               [TournamentController::class, 'destroy']);
-    Route::post('tournaments/{tournament}/close-registration', [TournamentController::class, 'closeRegistration']);
+    // ─── Organizer Routes ────────────────────────────────────────────────────────
+    Route::middleware('role.organizer')->group(function () {
+        Route::post('tournaments',                              [TournamentController::class, 'store']);
+        Route::put('tournaments/{tournament}',                  [TournamentController::class, 'update']);
+        Route::delete('tournaments/{tournament}',               [TournamentController::class, 'destroy']);
+        Route::post('tournaments/{tournament}/close-registration', [TournamentController::class, 'closeRegistration']);
+        
+        Route::get('tournaments/{tournament}/participants',     [TournamentRegistrationController::class, 'participants']);
+        
+        Route::patch('matches/{match}/score',                   [MatchController::class, 'updateScore']);
+        Route::delete('matches/{match}/score',                  [MatchController::class, 'resetScore']);
+    });
 
-    // Participants (organizer only)
-    Route::get('tournaments/{tournament}/participants',     [TournamentRegistrationController::class, 'participants']);
+    // ─── Player Routes ───────────────────────────────────────────────────────────
+    Route::middleware('role.player')->group(function () {
+        Route::post('tournaments/{tournament}/register',        [TournamentRegistrationController::class, 'register']);
+    });
 
-    // Player registration
-    Route::post('tournaments/{tournament}/register',        [TournamentRegistrationController::class, 'register']);
-
-    // Match score (organizer only)
-    Route::patch('matches/{match}/score',                  [MatchController::class, 'updateScore']);
+    // ─── Authenticated Public-ish Routes ─────────────────────────────────────────
     Route::get('tournaments/{tournament}/matches', [MatchController::class, 'index']);
     Route::get('matches/{match}', [MatchController::class, 'show']);
-    Route::patch('matches/{match}/score', [MatchController::class, 'updateScore']);
-    Route::delete('matches/{match}/score', [MatchController::class, 'resetScore']);
 });
