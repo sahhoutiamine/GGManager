@@ -2,11 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Models\Tournament;
+use App\Services\BracketService;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
 
-class GenerateBracketJob implements Job
+class GenerateBracketJob implements ShouldQueue
 {
+    use Dispatchable, Queueable;
     protected $tournament;
 
     /**

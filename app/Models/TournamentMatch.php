@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TournamentMatch extends Model
 {
@@ -53,5 +54,13 @@ class TournamentMatch extends Model
     public function nextMatch(): BelongsTo
     {
         return $this->belongsTo(TournamentMatch::class, 'next_match_id');
+    }
+
+    /**
+     * Matches from the previous round whose winner feeds into this match.
+     */
+    public function previousMatches(): HasMany
+    {
+        return $this->hasMany(TournamentMatch::class, 'next_match_id');
     }
 }
