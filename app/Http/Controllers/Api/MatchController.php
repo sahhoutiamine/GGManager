@@ -52,4 +52,36 @@ class MatchController extends Controller
 
         return new MatchResource($match->fresh(['player1', 'player2', 'winner']));
     }
+
+    // Liste des matchs d'un tournoi spécifique
+    public function index($tournamentId)
+    {
+        $matches = TournamentMatch::where('tournament_id', $tournamentId)
+            ->with(['player1', 'player2', 'winner'])
+            ->orderBy('round')
+            ->orderBy('position')
+            ->get();
+
+        return MatchResource::collection($matches);
+    }
+
+    // Voir un match spécifique
+    public function show(TournamentMatch $match)
+    {
+        return new MatchResource($match->load(['player1', 'player2', 'winner']));
+    }
+
+    // Reset le score d'un match (DELETE technique du score)
+    public function resetScore(TournamentMatch $match)
+    {
+        $this->authorize('updateScore', $match);
+
+        $match->update([
+            'score' => null,
+            'winner_id' => null,
+            'status' => 'scheduled',
+        ]);
+
+        return response()->json(['message' => 'Score reset successfully']);
+    }
 }

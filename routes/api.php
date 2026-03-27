@@ -40,4 +40,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Match score (organizer only)
     Route::patch('matches/{match}/score',                  [MatchController::class, 'updateScore']);
+    Route::get('tournaments/{tournament}/matches', [MatchController::class, 'index']);
+    Route::get('matches/{match}', [MatchController::class, 'show']);
+    Route::patch('matches/{match}/score', [MatchController::class, 'updateScore']);
+    Route::delete('matches/{match}/score', [MatchController::class, 'resetScore']);
 });
