@@ -13,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'role.organizer' => \App\Http\Middleware\EnsureUserIsOrganizer::class,
+            'role.player'    => \App\Http\Middleware\EnsureUserIsPlayer::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
