@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Jobs\GenerateBracketJob;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\TournamentRequest;
+use App\Http\Requests\StoreTournamentRequest;
+use App\Http\Requests\UpdateTournamentRequest;
 use App\Http\Resources\TournamentResource;
 use App\Models\Tournament;
 use Illuminate\Http\Request;
@@ -32,7 +33,7 @@ class TournamentController extends Controller
     /**
      * Store a newly created tournament.
      */
-    public function store(TournamentRequest $request): TournamentResource
+    public function store(StoreTournamentRequest $request): TournamentResource
     {
         $this->authorize('create', Tournament::class);
 
@@ -43,7 +44,7 @@ class TournamentController extends Controller
             'status' => 'open',
         ]);
 
-        return new TournamentResource($tournament);
+        return new TournamentResource($tournament->load(['organizer', 'registrations']));
     }
 
     /**
@@ -57,13 +58,13 @@ class TournamentController extends Controller
     /**
      * Update the specified tournament.
      */
-    public function update(TournamentRequest $request, Tournament $tournament): TournamentResource
+    public function update(UpdateTournamentRequest $request, Tournament $tournament): TournamentResource
     {
         $this->authorize('update', $tournament);
 
         $tournament->update($request->validated());
 
-        return new TournamentResource($tournament);
+        return new TournamentResource($tournament->load(['organizer', 'registrations']));
     }
 
     /**
@@ -83,7 +84,7 @@ class TournamentController extends Controller
      */
     public function closeRegistration(Tournament $tournament): \Illuminate\Http\JsonResponse
     {
-        $this->authorize('update', $tournament);
+        $this->authorize('closeRegistration', $tournament);
 
         if ($tournament->status !== 'open') {
             return response()->json([
