@@ -22,8 +22,19 @@ class ScoreUpdated implements ShouldBroadcast
 
     public function broadcastOn(): Channel
     {
-        // Canal public basé sur l'ID du tournoi
         return new Channel('tournament.' . $this->match->tournament_id);
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'match_id'   => $this->match->id,
+            'round'      => $this->match->round,
+            'player1_id' => $this->match->player1_id,
+            'player2_id' => $this->match->player2_id,
+            'score'      => $this->match->score,
+            'winner_id'  => $this->match->winner_id,
+        ];
     }
 
     public function broadcastAs(): string

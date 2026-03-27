@@ -17,43 +17,45 @@ class BracketService
      */
     public function generate(Tournament $tournament): void
     {
-        // ── Idempotency guard ────────────────────────────────────────────────
-        if ($tournament->bracket()->exists()) {
-            throw new RuntimeException(
-                "A bracket already exists for tournament [{$tournament->id}]."
-            );
-        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($tournament) {
+            // ── Idempotency guard ────────────────────────────────────────────────
+            if ($tournament->bracket()->exists()) {
+                throw new RuntimeException(
+                    "A bracket already exists for tournament [{$tournament->id}]."
+                );
+            }
 
-        // ── Load confirmed participants ──────────────────────────────────────
-        // Status must match what TournamentRegistrationController stores ('confirmed')
-        $participants = $tournament->participants()
-            ->wherePivot('status', 'confirmed')
-            ->get()
-            ->shuffle();
+            // ── Load confirmed participants ──────────────────────────────────────
+            // Status must match what TournamentRegistrationController stores ('confirmed')
+            $participants = $tournament->participants()
+                ->wherePivot('status', 'confirmed')
+                ->get()
+                ->shuffle();
 
-        $count = $participants->count();
+            $count = $participants->count();
 
-        if ($count < 2) {
-            throw new RuntimeException(
-                "Tournament [{$tournament->id}] needs at least 2 confirmed participants to generate a bracket."
-            );
-        }
+            if ($count < 2) {
+                throw new RuntimeException(
+                    "Tournament [{$tournament->id}] needs at least 2 confirmed participants to generate a bracket."
+                );
+            }
 
-        // ── Round calculation (supports non-power-of-2 with byes) ───────────
-        $totalRounds = (int) ceil(log($count, 2));
-        $bracketSize = (int) pow(2, $totalRounds); // next power of 2 >= $count
-        $byeCount    = $bracketSize - $count;       // byes to fill to a power of 2
+            // ── Round calculation (supports non-power-of-2 with byes) ───────────
+            $totalRounds = (int) ceil(log($count, 2));
+            $bracketSize = (int) pow(2, $totalRounds); // next power of 2 >= $count
+            $byeCount    = $bracketSize - $count;       // byes to fill to a power of 2
 
-        // Fill with nulls (byes) so pairing is symmetric
-        $slots = $participants->concat(array_fill(0, $byeCount, null))->values();
+            // Fill with nulls (byes) so pairing is symmetric
+            $slots = $participants->concat(array_fill(0, $byeCount, null))->values();
 
-        // ── Create bracket record ────────────────────────────────────────────
-        $bracket = Bracket::create([
-            'tournament_id' => $tournament->id,
-            'total_rounds'  => $totalRounds,
-        ]);
+            // ── Create bracket record ────────────────────────────────────────────
+            $bracket = Bracket::create([
+                'tournament_id' => $tournament->id,
+                'total_rounds'  => $totalRounds,
+            ]);
 
-        $this->createRounds($bracket, $slots, $totalRounds);
+            $this->createRounds($bracket, $slots, $totalRounds);
+        });
     }
 
     /**

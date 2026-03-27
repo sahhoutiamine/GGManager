@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateScoreRequest;
 use App\Http\Resources\MatchResource;
 use App\Models\TournamentMatch;
-use App\Events\ScoreUpdated;
+use App\Services\MatchService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class MatchController extends Controller
@@ -19,38 +19,19 @@ class MatchController extends Controller
      * Update the score of a match and propagate the winner to the next round.
      * Only the organizer who owns the tournament may perform this action.
      */
-    public function updateScore(UpdateScoreRequest $request, TournamentMatch $match): MatchResource
+    public function updateScore(UpdateScoreRequest $request, TournamentMatch $match, MatchService $matchService): MatchResource
     {
         $this->authorize('updateScore', $match);
 
         $validated = $request->validated();
 
-        // Persist result on current match
-        $match->update([
-            'score'     => $validated['score'],
-            'winner_id' => $validated['winner_id'],
-            'status'    => 'finished',
-        ]);
+        $updatedMatch = $matchService->updateScore(
+            $match,
+            $validated['score'],
+            $validated['winner_id']
+        );
 
-        // ── Winner propagation ───────────────────────────────────────────────
-        // Move the winner into the next match as player1 or player2 depending
-        // on which slot is still empty.
-        if ($match->next_match_id) {
-            $nextMatch = TournamentMatch::find($match->next_match_id);
-
-            if ($nextMatch) {
-                if (is_null($nextMatch->player1_id)) {
-                    $nextMatch->update(['player1_id' => $validated['winner_id']]);
-                } elseif (is_null($nextMatch->player2_id)) {
-                    $nextMatch->update(['player2_id' => $validated['winner_id']]);
-                }
-            }
-        }
-
-        // ── Real-time broadcast ──────────────────────────────────────────────
-        broadcast(new ScoreUpdated($match->fresh(['player1', 'player2', 'winner'])))->toOthers();
-
-        return new MatchResource($match->fresh(['player1', 'player2', 'winner']));
+        return new MatchResource($updatedMatch);
     }
 
     // Liste des matchs d'un tournoi spécifique
@@ -71,16 +52,11 @@ class MatchController extends Controller
         return new MatchResource($match->load(['player1', 'player2', 'winner']));
     }
 
-    // Reset le score d'un match (DELETE technique du score)
-    public function resetScore(TournamentMatch $match)
+    public function resetScore(TournamentMatch $match, MatchService $matchService)
     {
         $this->authorize('updateScore', $match);
 
-        $match->update([
-            'score' => null,
-            'winner_id' => null,
-            'status' => 'scheduled',
-        ]);
+        $matchService->resetScore($match);
 
         return response()->json(['message' => 'Score reset successfully']);
     }
