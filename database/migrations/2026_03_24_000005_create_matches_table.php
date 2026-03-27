@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tournament_id')->constrained()->onDelete('cascade');
             $table->foreignId('bracket_id')->constrained()->onDelete('cascade');
-            $table->foreignId('next_match_id')->nullable()->constrained('matches')->onDelete('cascade');
+            $table->foreignId('next_match_id')->nullable()->constrained('matches')->onDelete('set null');
             $table->integer('round');
             $table->integer('position');
             
